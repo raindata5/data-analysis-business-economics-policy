@@ -45,21 +45,65 @@ bus_cat_dataframe = (
     .to_dataframe()
 )
 
-
+#[]
+#
+cg_dataframe
 
 #[]
-# serializing before running any transormations and also to get proper pandas object with hints 
-cg_dataframe.to_csv('county_growth_est.csv',sep='|', float_format = '{:,.2f}', index=False )
-holding_dataframe.to_csv('holding.csv',sep='|', float_format = '{:,.2f}', index=False )
-bus_cat_dataframe.to_csv('bus_cat.csv',sep='|', float_format = '{:,.2f}', index=False )
+#
+holding_dataframe
 
 #[]
+#
+holding_dataframe.info()
+
+#[]
+#
+holding_dataframe['CloseDate'] = pd.to_datetime(holding_dataframe['CloseDate'])
+holding_dataframe[['BusinessRating', 'previous_rating', 'abs_rating_diff', 'total_bus_rating_delta']] = holding_dataframe[['BusinessRating', 'previous_rating', 'abs_rating_diff', 'total_bus_rating_delta']].astype(float)
+
+#[]
+#
+holding_dataframe.info()
+
+#[]
+#
+holding_dataframe
+
+#[]
+#
+bus_cat_dataframe
+
+#[]
+bus_cat_dataframe.info()
+
+#[]
+#
+cg_dataframe.to_csv('county_growth_est.csv',sep='|', index=False )
+holding_dataframe.to_csv('holding.csv',sep='|', index=False )
+bus_cat_dataframe.to_csv('bus_cat.csv',sep='|', index=False )
+
+#[]
+#
 cg_dataframe = pd.read_csv('county_growth_est.csv',sep='|', low_memory=True)
 holding_dataframe = pd.read_csv('holding.csv',sep='|', low_memory=True)
 bus_cat_dataframe = pd.read_csv('bus_cat.csv',sep='|', low_memory=True)
 
 #[]
 #
+cg_dataframe
+
+#[]
+holding_dataframe
+
+#[]
+#
+bus_cat_dataframe
+#[]
+#
+
+
+
 bus_cat_holding= bus_cat_dataframe.merge(right=holding_dataframe, how='inner', on = 'BusinessName')
 bus_cat_holding.shape
 
@@ -67,8 +111,13 @@ bus_cat_holding.shape
 # first we'll group by categoryname and see the agg results
 cat_groups = bus_cat_holding.groupby(['BusinessCategoryName'], as_index=False)[['ReviewCount','BusinessRating']].agg({"ReviewCount": ['sum', 'mean', 'max'], "BusinessRating": ['mean', 'max']})
 
+#[]
+#
 # here we'll focus on the top 10 based on the following criteria
 cat_groups.sort_values(by=[('ReviewCount', 'sum'), ('ReviewCount', 'mean'), ('BusinessRating', 'mean')], ascending=False).head(10)
-
+#[]
+#
+bus_cat_holding.groupby(['BusinessCategoryName'], as_index=False)['BusinessName'].count().sort_values(by=[
+    'BusinessName'], ascending=False).head(10)
 
 cat_groups.reset_index()
