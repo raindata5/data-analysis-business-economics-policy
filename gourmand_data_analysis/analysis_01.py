@@ -95,14 +95,35 @@ cg_dataframe
 
 #[]
 holding_dataframe
+holding_dataframe.sort_values(['total_review_cnt_delta', 'CloseDate'], ascending = False).head(10)
+
+#[]
+#
+most_recent_holding = holding_dataframe.sort_values(['BusinessName', 'CloseDate'], ascending = False).drop_duplicates(subset=['BusinessName'] , keep='first')
+print(most_recent_holding.shape)
+print(most_recent_holding)
 
 #[]
 #
 bus_cat_dataframe
 #[]
 #
+import matplotlib.pyplot as plt
+%matplotlib inline
 
+#[]
+#
+most_recent_holding = most_recent_holding.reset_index(drop=True)
+most_recent_holding
 
+#[]
+#
+most_recent_holding.hist(bins=20,figsize=(15,20))
+
+#[]
+#
+most_recent_holding['total_review_cnt_delta'].value_counts(bins=10, normalize=True)
+most_recent_holding['total_bus_rating_delta'].value_counts(bins=10, normalize=True)
 
 bus_cat_holding= bus_cat_dataframe.merge(right=holding_dataframe, how='inner', on = 'BusinessName')
 bus_cat_holding.shape
