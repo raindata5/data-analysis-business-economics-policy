@@ -125,6 +125,40 @@ most_recent_holding.hist(bins=20,figsize=(15,20))
 most_recent_holding['total_review_cnt_delta'].value_counts(bins=10, normalize=True)
 most_recent_holding['total_bus_rating_delta'].value_counts(bins=10, normalize=True)
 
+#[]
+#
+thirdq, firstq = most_recent_holding['total_review_cnt_delta'].quantile(.75), most_recent_holding['total_review_cnt_delta'].quantile(.25)
+quartilerange = 1.5 * (thirdq - firstq)
+highoutlier, lowoutlier = quartilerange + thirdq, firstq - quartilerange
+print(highoutlier, lowoutlier, sep='<---->')
+
+#[]
+#
+thirdq2, firstq2 = most_recent_holding['total_bus_rating_delta'].quantile(.75), most_recent_holding['total_bus_rating_delta'].quantile(.25)
+quartilerange2 = 1.5 * (thirdq2 - firstq2)
+highoutlier2, lowoutlier2 = quartilerange2 + thirdq2, firstq2 - quartilerange2
+print(highoutlier2, lowoutlier2, sep='<---->')
+
+#[]
+#
+def get_outliers():
+  dfout = pd.DataFrame(columns = most_recent_holding.columns, data=None) #initializes a dataframe with no values but all orig. columns from df
+  for col in ['total_bus_rating_delta', 'total_review_cnt_delta']: # just going to loop through the numeric columns
+    thirdq, firstq = most_recent_holding[col].quantile(0.75), most_recent_holding[col].quantile(0.25)
+    quartilerange = 1.5*(thirdq-firstq)
+    highoutlier, lowoutlier = quartilerange + thirdq, firstq - quartilerange
+    df = most_recent_holding.loc[(most_recent_holding[col] > highoutlier) | (most_recent_holding[col] < lowoutlier)] # for each columns we will isolate the extreme values
+    df = df.assign(varname = col, threshlow= lowoutlier, threshhigh= highoutlier) # creates 3 new columns that corresponds to a label and the high outlier , and then the low outlier for that label respectively
+    dfout = pd.concat([dfout,df]) # just a simple concatenation of the df's
+  return dfout
+
+extreme_df = get_outliers()
+
+#[]
+#
+extreme_df.groupby(['Businessname'], as_index=False)['varname'].count()
+
+
 bus_cat_holding= bus_cat_dataframe.merge(right=holding_dataframe, how='inner', on = 'BusinessName')
 bus_cat_holding.shape
 
