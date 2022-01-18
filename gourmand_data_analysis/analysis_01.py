@@ -122,8 +122,9 @@ most_recent_holding.hist(bins=20,figsize=(15,20))
 
 #[]
 #
-most_recent_holding['total_review_cnt_delta'].value_counts(bins=10, normalize=True)
-most_recent_holding['total_bus_rating_delta'].value_counts(bins=10, normalize=True)
+print(most_recent_holding['total_bus_rating_delta'].value_counts(bins=10, normalize=True, sort=False))
+print('\n')
+print(most_recent_holding['total_bus_rating_delta'].value_counts(bins=10, sort=False))
 
 #[]
 #
@@ -156,7 +157,38 @@ extreme_df = get_outliers()
 
 #[]
 #
-extreme_df.groupby(['Businessname'], as_index=False)['varname'].count()
+grouped_extreme_df = extreme_df.groupby(['BusinessName'], as_index=False)['varname'].count()
+grouped_extreme_df_bus = grouped_extreme_df.loc[grouped_extreme_df['varname'] > 1, ['BusinessName']]
+grouped_extreme_df_bus
+
+#[]
+#
+exe_most_recent_holding = most_recent_holding.loc[most_recent_holding['BusinessName'].isin(grouped_extreme_df_bus['BusinessName'].values), :]
+exe_most_recent_holding = exe_most_recent_holding.reset_index(drop=True)
+exe_most_recent_holding
+
+#[]
+#
+
+print(exe_most_recent_holding['total_bus_rating_delta'].value_counts( ascending=False).sort_index())
+print('\n')
+print(exe_most_recent_holding['total_review_cnt_delta'].value_counts(ascending=False).sort_index())
+
+#[]
+#
+exe_most_recent_holding.describe(include='all')
+
+#[]
+#
+exe_most_recent_holding.to_csv('exe_most_recent_holding.csv',sep='|', index=False )
+
+#[]
+#
+exe_most_recent_holding_loc = bus_cat_dataframe.merge(right=exe_most_recent_holding, how='inner', on = 'BusinessName')
+exe_most_recent_holding_loc
+
+#[]
+#
 
 
 bus_cat_holding= bus_cat_dataframe.merge(right=holding_dataframe, how='inner', on = 'BusinessName')
