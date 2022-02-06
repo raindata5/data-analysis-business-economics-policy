@@ -3,7 +3,7 @@ from google.cloud import bigquery
 import configparser
 import pandas as pd
 pd.options.display.float_format = '{:,.2f}'.format
-
+import plotly.express as px 
 
 KEY_PATH = "/mnt/c/Users/Ron/git-repos/yelp-data/gourmanddwh-f75384f95e86.json"
 CREDS = service_account.Credentials.from_service_account_file(KEY_PATH)
@@ -109,7 +109,7 @@ bus_cat_dataframe
 #[]
 #
 import matplotlib.pyplot as plt
-%matplotlib inline
+
 
 #[]
 #
@@ -189,11 +189,43 @@ exe_most_recent_holding_loc
 
 #[]
 #
+df3 = pd.merge(left=df2, right = cg_dataframe, left_on=['CountyName','StateName'], right_on=['CountyName','StateName'])
+df3
+
+#[]
+#
+df3.columns
+
+#[]
+#
+bins_of_10 = pd.cut(df3['abs_review_diff'], bins=10)
+bins_of_3 = pd.cut(df3['abs_review_diff'], bins=3)
+
+#[]
+#
+df_bins = pd.concat([bins_of_3, bins_of_10], axis=1)
+df_bins.columns = ['bins_of_3', 'bins_of_10']
+
+df3_w_bins =  pd.concat([df3, df_bins], axis=1)
+df3_w_bins
+
+#[]
+#
+df3_w_bins.groupby(['bins_of_3'], as_index=False).agg({'bins_of_3': ['median']})
 
 
 bus_cat_holding= bus_cat_dataframe.merge(right=holding_dataframe, how='inner', on = 'BusinessName')
 bus_cat_holding.shape
 
+#[]
+#
+fig = px.scatter(
+  df=df3_w_bins,
+  x='total_review_cnt_delta',
+  y='abs_delta'
+)
+
+fig.show()
 #[]
 # first we'll group by categoryname and see the agg results
 cat_groups = bus_cat_holding.groupby(['BusinessCategoryName'], as_index=False)[['ReviewCount','BusinessRating']].agg({"ReviewCount": ['sum', 'mean', 'max'], "BusinessRating": ['mean', 'max']})
