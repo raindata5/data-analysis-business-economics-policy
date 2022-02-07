@@ -226,6 +226,11 @@ fig = px.scatter(
 )
 
 fig.show()
+
+#[]
+#
+
+
 #[]
 # first we'll group by categoryname and see the agg results
 cat_groups = bus_cat_holding.groupby(['BusinessCategoryName'], as_index=False)[['ReviewCount','BusinessRating']].agg({"ReviewCount": ['sum', 'mean', 'max'], "BusinessRating": ['mean', 'max']})
