@@ -2,8 +2,14 @@ from google.oauth2 import service_account
 from google.cloud import bigquery
 import configparser
 import pandas as pd
-pd.options.display.float_format = '{:,.2f}'.format
+import numpy as np
+import math
+import seaborn as sns
 import plotly.express as px 
+import matplotlib.pyplot as plt
+%matplotlib inline
+pd.options.display.float_format = '{:,.2f}'.format
+pd.options.display.float_format = '{:,.4f}'.format
 
 KEY_PATH = "/mnt/c/Users/Ron/git-repos/yelp-data/gourmanddwh-f75384f95e86.json"
 CREDS = service_account.Credentials.from_service_account_file(KEY_PATH)
@@ -237,6 +243,9 @@ cat_groups = bus_cat_holding.groupby(['BusinessCategoryName'], as_index=False)[[
 
 #[]
 #
+
+
+
 # here we'll focus on the top 10 based on the following criteria
 cat_groups.sort_values(by=[('ReviewCount', 'sum'), ('ReviewCount', 'mean'), ('BusinessRating', 'mean')], ascending=False).head(10)
 #[]
@@ -245,3 +254,86 @@ bus_cat_holding.groupby(['BusinessCategoryName'], as_index=False)['BusinessName'
     'BusinessName'], ascending=False).head(10)
 
 cat_groups.reset_index()
+
+#[]
+#
+cg_dataframe = pd.read_csv('county_growth_est.csv',sep='|', low_memory=True)
+holding_dataframe = pd.read_csv('holding.csv',sep='|', low_memory=True)
+bus_cat_dataframe = pd.read_csv('bus_cat.csv',sep='|', low_memory=True)
+pd.options.display.float_format = '{:,.4f}'.format
+
+#[]
+#
+
+#variance
+
+est_pop_variance = ((cg_dataframe.EstimatedPopulation - cg_dataframe.EstimatedPopulation.mean()) ** 2).sum() / cg_dataframe.EstimatedPopulation.shape[0]
+est_pop_variance
+
+# standard deviation
+est_pop_std = (((cg_dataframe.EstimatedPopulation - cg_dataframe.EstimatedPopulation.mean()) ** 2).sum() / cg_dataframe.EstimatedPopulation.shape[0]) ** (1/2)
+est_pop_std
+
+std2 = np.std(cg_dataframe.EstimatedPopulation)
+std2
+#variance
+abs_delta_variance =  ((cg_dataframe.abs_delta - cg_dataframe.abs_delta.mean()) ** 2).sum() / cg_dataframe.abs_delta.shape[0]
+abs_delta_variance
+# standard deviation
+abs_delta_std = abs_delta_variance ** (1/2)
+abs_delta_std
+
+# Covariance
+
+covariance_abs_delta_est_pop = ((cg_dataframe.abs_delta - cg_dataframe.abs_delta.mean()) * (cg_dataframe.EstimatedPopulation - cg_dataframe.EstimatedPopulation.mean())).sum() / cg_dataframe.EstimatedPopulation.shape[0]
+covariance_abs_delta_est_pop
+
+# correlation of abs_Delta and est_pop
+corr_abs_delta_est_pop = covariance_abs_delta_est_pop / (est_pop_std * abs_delta_std)
+corr_abs_delta_est_pop
+
+cg_dataframe.corr()['abs_delta']
+
+fig = px.scatter(cg_dataframe, x='EstimatedPopulation', y='abs_delta')
+fig.show()
+
+#[]
+# take z scores to see which states are the "biggest" (latent variable) with the z-scores coming from proxy variables
+    # take the avg horizontally
+# check and see how correlations can differ between different states  
+    # use a for loop to through each state with boolean indexing
+
+cg_dataframe['abs_delta_z_score'] = (cg_dataframe.abs_delta - cg_dataframe.abs_delta.mean()) / abs_delta_std
+
+cg_dataframe['est_pop_z_score'] = (cg_dataframe.EstimatedPopulation - cg_dataframe.EstimatedPopulation.mean()) / est_pop_std
+
+cg_dataframe['avg_z_score'] = cg_dataframe[['est_pop_z_score', 'abs_delta_z_score']].mean(axis=1)
+
+cg_dataframe.sort_values(['avg_z_score'], ascending=False)
+
+state_abs_est_corrs = []
+for state in cg_dataframe.StateName.unique():
+  state_filtered_df = cg_dataframe.loc[cg_dataframe.StateName == state]
+  cov_abs_est = ((state_filtered_df['abs_delta'] - state_filtered_df['abs_delta'].mean()) * (state_filtered_df['EstimatedPopulation'] - state_filtered_df['EstimatedPopulation'].mean())).sum() / state_filtered_df.shape[0]
+  state_filtered_df_abs_delta_std = (((state_filtered_df['abs_delta'] - state_filtered_df['abs_delta'].mean()) ** 2).sum() / state_filtered_df.shape[0]) ** (1/2)
+  state_filtered_df_est_pop_std = (((state_filtered_df['EstimatedPopulation'] - state_filtered_df['EstimatedPopulation'].mean()) ** 2).sum() / state_filtered_df.shape[0]) ** (1/2)
+  state_abs_est_corr = cov_abs_est / (state_filtered_df_abs_delta_std * state_filtered_df_est_pop_std)
+  state_abs_est_corr_tuple = (state, state_abs_est_corr, state_filtered_df.shape[0])
+  state_abs_est_corrs.append(state_abs_est_corr_tuple)
+
+state_abs_est_corrs_df = pd.DataFrame(data = state_abs_est_corrs, columns=['statename', 'abs_delta_estimated_pop_corr', 'obs_cnt'])
+
+state_abs_est_corrs_df.sort_values('abs_delta_estimated_pop_corr', ascending=False)
+
+# district of columnbia seems to be Nan because there is only one observation
+runtime_warning = cg_dataframe.loc[cg_dataframe.StateName == 'District of Columbia'].corr()['abs_delta']
+
+
+
+# sampledata = pd.Series([170,155,160,185,145])
+
+# std = math.sqrt((((sampledata - sampledata.mean()) ** 2).sum() / sampledata.shape[0]))
+# std
+
+# std = (((sampledata - sampledata.mean()) ** 2).sum() / sampledata.shape[0]) **.5
+# std

@@ -3,3 +3,6 @@ da-venv/
 *.dta
 .ipynb_checkpoints/
 da_venv/
+bus_cats/
+bus_holdings/
+cg_est/
