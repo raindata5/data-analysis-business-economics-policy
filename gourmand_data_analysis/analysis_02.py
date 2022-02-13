@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import random
 from collections import Counter
-pd.options.display.float_format = '{:,.2f}'.format
+pd.options.display.float_format = '{:,.4f}'.format
 
 KEY_PATH = "/mnt/c/Users/Ron/git-repos/yelp-data/gourmanddwh-f75384f95e86.json"
 CREDS = service_account.Credentials.from_service_account_file(KEY_PATH)
@@ -104,6 +104,8 @@ ordered_subway.loc[:, 'review_count_abs_diff_lag_1'] = (ordered_subway.ReviewCou
 ordered_subway.loc[:, 'review_count_perc_diff_lag_1'] = (ordered_subway['review_count_abs_diff_lag_1'] / ordered_subway.previous_review_cnt) ** 100
 ordered_subway.sort_values('review_count_perc_diff_lag_1', ascending=False)
 ordered_subway['review_count_perc_diff_lag_1'].value_counts(sort=True)
+ordered_subway['review_count_perc_diff_lag_1'].astype(float).value_counts(sort=True)
+ordered_subway['review_count_perc_diff_lag_1'].value_counts(bins=10)
 # percent differences while useful here may not be of much help so I will stick with abosolute values
 ordered_subway['review_count_abs_diff_lag_1'].value_counts(sort=True)
 
