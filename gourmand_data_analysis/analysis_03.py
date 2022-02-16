@@ -7,7 +7,7 @@ import os
 from statsmodels.stats.api import CompareMeans, DescrStatsW
 pd.options.display.float_format = '{:,.4f}'.format
 # between Florida and New York are there differences between rating or review percentage differences
-# would take the sums of the current day minus the sums of the previous day divided by the sums of the previous day ? (take the per capita stats based on population data we have)
+# would take the sums of the current day minus the sums of the previous day divided by the sums of the previous day ?
 # h0 : 0
 # ha : != 0 (i.e. 2 sided)
 
