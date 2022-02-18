@@ -50,7 +50,7 @@ first_last_review_cnts['relative_change'] = ((first_last_review_cnts['ReviewCoun
 first_last_review_cnts['relative_change']
 first_last_review_cnts['relative_change_gte_15'] = np.where(first_last_review_cnts['relative_change'] >= 15, 1, 0)
 relative_change_gte_15_stat = first_last_review_cnts['relative_change_gte_15'].mean() * 100
-relative_change_gte_15_stat # 9 %
+relative_change_gte_15_stat # 14 %
 
 #[]
 # our goal is to have relative_change_gte_15_stat - 5% > 0  so we can make the following hypothesis test
@@ -182,8 +182,8 @@ def group_t_stat_and_mean(x: pd.Series, a_number: Union[float, int], the_alterna
 
 multiple_hypothesis_test_results = first_last_review_cnts_loc_states.groupby(by=['StateName1'], as_index=False, observed=True)['relative_change_gte_15'].apply(group_t_stat_and_mean, .05, 'greater')
 
-joblib.dump(multiple_hypothesis_test_results, 'multiple_hypothesis_test_results')
-joblib.dump(top10_low10, 'top10_low10_states')
+joblib.dump(multiple_hypothesis_test_results, 'multiple_hypothesis_test_results_dump')
+joblib.dump(top10_low10, 'top10_low10_states_dump')
 
 #[]
 # come back and label top 10 businesses and bottom 10 then interpret
