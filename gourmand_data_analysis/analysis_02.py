@@ -205,4 +205,5 @@ print(f'and se formula estimate of {mcdonalds_formula_se:.5f}')
 # Mcdonald's CI with 95% confidence 0.01204 <---> 0.01526 with and se formula estimate of 0.00080
 
 #[]
+# add another hypothesis test as a difference of two means
 # why this worked and conclusion
