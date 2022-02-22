@@ -1,9 +1,11 @@
 # EDA through the use of correlation and regression
+from turtle import left
 import pandas as pd
 import statsmodels.api as sm
 import matplotlib.pyplot as plt
 import seaborn as sns
 from pandas.plotting import scatter_matrix
+import numpy as np
 #[]
 #
 cg_df = pd.read_parquet('cg_est', engine='pyarrow')
@@ -64,14 +66,105 @@ def bus_cat_groups(x):
     group_dict['cats'] = cats
     group_dict['goe_4'] = (1 if len(cats) >= 4 else 0)
     return pd.Series(group_dict)
-
-bus_cats_groups_df = bus_cats_df.groupby('BusinessName', as_index=False)['BusinessCategoryName'].apply(bus_cat_groups)
+bus_cats_groups_df = bus_cats_df.groupby(by=['BusinessName', 'CityName', 'CountyName', 'CountryName', 'StateName', 'Latitude','Longitude'], as_index=False, observed=True)['BusinessCategoryName'].apply(bus_cat_groups)
 bus_cats_groups_df_cut = bus_cats_groups_df[bus_cats_groups_df['goe_4'] == 1]
+pd.set_option('display.max_colwidth', 100) # 50 seems to be default
+bus_cats_groups_df_cut
 
 #[]
 #
-pd.set_option('display.max_colwidth', 100) # 50 seems to be default
-bus_cats_groups_df_cut.iloc[:,:2]
+bus_cats_groups_df_cut_cg = pd.merge(left=bus_cats_groups_df_cut, right=cg_df, on=['StateName','CountyName'], how='left')
+bus_cats_groups_df_cut_cg.head()
+
+#[]
+#
+cg_df_not_in = cg_df[~(cg_df['StateName'].astype(str) + cg_df['CountyName']).isin((bus_cats_groups_df_cut_cg['StateName'].astype(str) + bus_cats_groups_df_cut_cg['CountyName']).tolist())]
+cg_df_not_in.shape
+
+#[]
+#
+cg_df_not_in.EstimatedPopulation.mean()
+bus_cats_groups_df_cut_cg.groupby(by=['StateName','CountyName'], as_index=False, observed=True)['EstimatedPopulation'].first()
+
+#[]
+#
+import plotly.graph_objects as go
+
+fig = go.Figure(
+    data=go.Scattergeo(
+        lon=bus_cats_groups_df_cut_cg['Longitude'],
+        lat=bus_cats_groups_df_cut_cg['Latitude'],
+        mode='markers',
+        text = bus_cats_groups_df_cut_cg['abs_delta'].astype(str) , 
+        marker = dict(
+            colorscale = 'Blues', 
+            color=bus_cats_groups_df_cut_cg['abs_delta'],
+            colorbar = dict(
+            titleside = "top",
+            outlinecolor = "rgba(68, 68, 68, 0)",
+            title = "Estimated Abosute Population <br> change from previous year"
+
+        ))
+    )
+)
+fig.update_layout(
+    geo_scope='usa',
+    title= 'Businesses specializing in 4+ business category areas'
+)
+fig.show()
+
+#[]
+#
+
+most_recent_bus_cats_df_lt_4 = most_recent_bus_cats_df[most_recent_bus_cats_df['cat_counts'] < 4]
+most_recent_bus_cats_df_lt_4.shape
+
+#[]
+#
+most_recent_bus_cats_df_not_na = most_recent_bus_cats_df[most_recent_bus_cats_df['total_review_cnt_delta'].notna()]
+most_recent_bus_cats_df_not_na.info()
+
+#[]
+#
+X = sm.add_constant(most_recent_bus_cats_df_not_na['cat_counts'])
+y = most_recent_bus_cats_df_not_na['total_review_cnt_delta']
+univariate_lin_model = sm.OLS(Y, X)
+results = univariate_lin_model.fit(cov_type='HC1')
+#[]
+#
+
+results.summary()
+##come back and predict using the model
+#[]
+#
+#make sure to add constant when predicting as well
+univariate_lin_model_predictions = results.predict(X)
+univariate_lin_model_predictions
+
+#[]
+#
+univariate_lin_model_predictions_variance = ((univariate_lin_model_predictions - univariate_lin_model_predictions.mean()) ** 2).sum() / univariate_lin_model_predictions.shape[0]
+y_variance = ((y - y.mean()) ** 2).sum() / y.shape[0]
+univariate_lin_model_rsquared = univariate_lin_model_predictions_variance / y_variance
+
+#[]
+#
+residuals = y - univariate_lin_model_predictions
+residuals
+
+#[]
+#
+residuals_var = ((residuals - residuals.mean()) ** 2).sum() / residuals.shape[0]
+univariate_lin_model_rsquared_2 = 1 - (residuals_var / y_variance)
+
+#[]
+# 
+# X_variance = np.sqrt(((X - X.mean()) ** 2).sum() / X.shape[0])
+
+# y_X_covariance = ((y - y.mean()) * (X[1] - X[1].mean())).sum() / X.shape[0]
+# slope = y_X_covariance / X_variance[1]
+# slope
+
 
 #[]
 # on return finish decided on whether or not to remove these values
