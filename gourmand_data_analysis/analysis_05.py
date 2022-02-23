@@ -121,7 +121,7 @@ most_recent_bus_cats_df_lt_4.shape
 
 #[]
 #
-most_recent_bus_cats_df_not_na = most_recent_bus_cats_df[most_recent_bus_cats_df['total_review_cnt_delta'].notna()]
+most_recent_bus_cats_df_not_na = most_recent_bus_cats_df[most_recent_bus_cats_df['total_review_cnt_delta'].notna()].reset_index()
 most_recent_bus_cats_df_not_na.info()
 
 #[]
@@ -156,9 +156,62 @@ residuals
 #
 residuals_var = ((residuals - residuals.mean()) ** 2).sum() / residuals.shape[0]
 univariate_lin_model_rsquared_2 = 1 - (residuals_var / y_variance)
+univariate_lin_model_rsquared_2
+#[]
+#
+
+most_recent_bus_cats_df_not_na['uni_lin_mod_resi'] = residuals
+
+# most_recent_bus_cats_df_not_na.sort_values(by='uni_lin_mod_resi', ascending=True).head(5)
+# the following is more performant
+top_5_residuals_index = most_recent_bus_cats_df_not_na.nlargest(5, columns='uni_lin_mod_resi', keep='all').index
+bottom_5_residuals_index = most_recent_bus_cats_df_not_na.nsmallest(5, columns='uni_lin_mod_resi', keep='all').index
+#[]
+#
+most_recent_bus_cats_df_not_na.loc[top_5_residuals_index,'residual_res'] = 'top5_above_estimate'
+most_recent_bus_cats_df_not_na.loc[bottom_5_residuals_index,'residual_res'] = 'top5_below_estimate'
+
+# most_recent_bus_cats_df_not_na['residual_res'] = most_recent_bus_cats_df_not_na['residual_res'].fillna('N/A')
+most_recent_bus_cats_df_not_na['residual_res'] = np.where(most_recent_bus_cats_df_not_na['residual_res'].isna(), 'N/A', most_recent_bus_cats_df_not_na['residual_res'])
 
 #[]
-# 
+#
+most_recent_bus_cats_df_not_na['residual_res'].value_counts()
+
+#[]
+#
+
+sns.set_theme()
+fig, axes = plt.subplots(1, 2, sharey= True, figsize=(20, 10))
+
+sns.regplot(x=most_recent_bus_cats_df_not_na['cat_counts'],
+ y=most_recent_bus_cats_df_not_na['total_review_cnt_delta'],
+  x_jitter=.05, ax=axes[0])
+
+sns.scatterplot(x=most_recent_bus_cats_df_not_na['cat_counts'],
+ y=most_recent_bus_cats_df_not_na['total_review_cnt_delta'],
+  x_jitter=.05, hue=most_recent_bus_cats_df_not_na['residual_res'],
+                style=most_recent_bus_cats_df_not_na['residual_res'],
+                palette = "deep",
+                  size=most_recent_bus_cats_df_not_na['residual_res'], 
+                  sizes={
+                      'top5_above_estimate':500,
+                      'top5_below_estimate': 500,
+                      'N/A':75
+                  },
+                  ax=axes[1])
+fig.show()
+
+#[]
+#
+
+
+#[]
+# y-intercept
+# y_intercept = y.mean() - X.iloc[1].mean() * 0.6005
+# y_intercept
+#[]
+# slope
 # X_variance = np.sqrt(((X - X.mean()) ** 2).sum() / X.shape[0])
 
 # y_X_covariance = ((y - y.mean()) * (X[1] - X[1].mean())).sum() / X.shape[0]
