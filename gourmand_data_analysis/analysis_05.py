@@ -128,7 +128,7 @@ most_recent_bus_cats_df_not_na.info()
 #
 X = sm.add_constant(most_recent_bus_cats_df_not_na['cat_counts'])
 y = most_recent_bus_cats_df_not_na['total_review_cnt_delta']
-univariate_lin_model = sm.OLS(Y, X)
+univariate_lin_model = sm.OLS(y, X)
 results = univariate_lin_model.fit(cov_type='HC1')
 #[]
 #
@@ -151,6 +151,24 @@ univariate_lin_model_rsquared = univariate_lin_model_predictions_variance / y_va
 #
 residuals = y - univariate_lin_model_predictions
 residuals
+
+#[]
+#
+plt.figure(figsize=(15, 10))
+plt.hist(residuals, bins=10)
+plt.axvline(np.median(residuals), color='yellow', linestyle='dashed', linewidth=2 , label='median')
+plt.axvline(np.mean(residuals), color='red', linestyle='dashed', linewidth=2 , label='mean')
+plt.title("Histogram of Residuals")
+plt.xlabel("Residual")
+plt.ylabel("Frequency")
+plt.legend()
+plt.show()
+
+#[]
+#
+plt.figure(figsize=(15, 10))
+sns.kdeplot(residuals)
+plt.show()
 
 #[]
 #
@@ -191,7 +209,7 @@ sns.regplot(x=most_recent_bus_cats_df_not_na['cat_counts'],
 sns.scatterplot(x=most_recent_bus_cats_df_not_na['cat_counts'],
  y=most_recent_bus_cats_df_not_na['total_review_cnt_delta'],
   x_jitter=.05, hue=most_recent_bus_cats_df_not_na['residual_res'],
-                style=most_recent_bus_cats_df_not_na['residual_res'],
+                # style=most_recent_bus_cats_df_not_na['residual_res'],
                 palette = "deep",
                   size=most_recent_bus_cats_df_not_na['residual_res'], 
                   sizes={
@@ -200,11 +218,52 @@ sns.scatterplot(x=most_recent_bus_cats_df_not_na['cat_counts'],
                       'N/A':75
                   },
                   ax=axes[1])
+
+for row in [most_recent_bus_cats_df_not_na.loc[top_5_residuals_index[0],:], most_recent_bus_cats_df_not_na.loc[bottom_5_residuals_index[0],:]]:
+    axes[1].annotate(f'{row.residual_res}: {row.uni_lin_mod_resi} residual', xy=(row['cat_counts'],row['uni_lin_mod_resi']), xytext=(row['cat_counts'] - 1,row['uni_lin_mod_resi'] + 5), size=7, arrowprops=dict(facecolor='red', headwidth=3, width=1))
+
 fig.show()
 
 #[]
 #
 
+most_recent_bus_cats_df_not_na['text'] = most_recent_bus_cats_df_not_na['total_review_cnt_delta'].astype(str) + ', ' + most_recent_bus_cats_df_not_na['cat_counts'].astype(str) + ', ' +  'Residual: ' + most_recent_bus_cats_df_not_na['uni_lin_mod_resi'].astype(str)
+most_recent_bus_cats_df_not_na_lon_lat = pd.merge(left=most_recent_bus_cats_df_not_na, right=bus_cats_df.groupby('BusinessName', as_index=False).first(), on=['BusinessName'], how='inner')
+most_recent_bus_cats_df_not_na_lon_lat
+#[]
+#
+
+fig = go.Figure(
+    data=go.Scattergeo(
+        lon=most_recent_bus_cats_df_not_na_lon_lat.loc[top_5_residuals_index.tolist() + bottom_5_residuals_index.tolist(), 'Longitude'],
+        lat=most_recent_bus_cats_df_not_na_lon_lat.loc[top_5_residuals_index.tolist() + bottom_5_residuals_index.tolist(), 'Latitude'],
+        mode='markers',
+        text = most_recent_bus_cats_df_not_na_lon_lat.loc[top_5_residuals_index.tolist() + bottom_5_residuals_index.tolist(),'text'] , 
+        marker = dict(
+            color=most_recent_bus_cats_df_not_na_lon_lat.loc[top_5_residuals_index.tolist() + bottom_5_residuals_index.tolist(), 'uni_lin_mod_resi'],
+            colorbar = dict(
+            titleside = "top",
+            outlinecolor = "rgba(68, 68, 68, 0)",
+            title = "Residuals"
+
+        ))
+    )
+)
+fig.update_layout(
+    geo_scope='usa',
+    title= 'Businesses with extreme residuals'
+)
+# most_recent_bus_cats_df_not_na_lon_lat.loc[(most_recent_bus_cats_df_not_na_lon_lat['residual_res'] == 'top5_above_estimate') & (most_recent_bus_cats_df_not_na_lon_lat['uni_lin_mod_resi'].between(60, 80)), 'Latitude']
+# most_recent_bus_cats_df_not_na_lon_lat.loc[(most_recent_bus_cats_df_not_na_lon_lat['residual_res'] == 'top5_above_estimate') & (most_recent_bus_cats_df_not_na_lon_lat['uni_lin_mod_resi'].between(60, 80)), 'Longitude']
+fig.add_annotation(x=.17, y=.60,
+            text="2 observations on top of each other",
+            showarrow=True,
+            arrowhead=1)
+
+fig.show()
+# change the color scale or annotate invis value
+#[]
+#
 
 #[]
 # y-intercept
