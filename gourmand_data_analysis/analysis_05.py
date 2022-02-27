@@ -1,5 +1,4 @@
 # EDA through the use of correlation and regression
-from turtle import left
 import pandas as pd
 import statsmodels.api as sm
 import matplotlib.pyplot as plt

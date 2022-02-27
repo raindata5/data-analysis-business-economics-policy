@@ -1,5 +1,6 @@
 with bus_lag as (
 select 
+    db.BusinessKey,
     db.BusinessName,
     db.ChainName,
     fbh.BusinessRating,
@@ -15,6 +16,7 @@ order by db.BusinessName, fbh.CloseDate
 ,
 total_lags as (
 SELECT
+    BusinessKey,
     BusinessName,
     ChainName,
     BusinessRating,
