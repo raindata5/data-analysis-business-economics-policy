@@ -216,7 +216,7 @@ sns.set_theme()
 plt.figure(figsize=(15, 10))
 sns.regplot(
     x=most_recent_bh_df_sin_cero['BusinessRating'],
-    y=most_recent_bh_df_sin_cero['ReviewCount'], x_jitter=.30, order=2,
+    y=most_recent_bh_df_sin_cero['ln_review_count'], x_jitter=.10, order=2,
     line_kws={'color':'cyan'})
 
 plt.title('higher-order polynomial of explanatory variable')
