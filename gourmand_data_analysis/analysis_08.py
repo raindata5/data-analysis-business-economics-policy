@@ -251,6 +251,25 @@ sns.lineplot(
     x=low_bus_pred_df['transactioncounts'],
     y=low_bus_pred_df['CIup'],  color='blue', linestyle='--', ax=ax)
 
-
-
 plt.legend()
+
+#[]
+#
+
+
+multivariate_inter_model_results['predictions'] =  multivariate_inter_model_results.predict(most_recent_bh_df_sin_cero_cat_dummies_with_cons_df[cols])
+
+#[]
+#
+fig, axes = plt.subplots(1,1, figsize=(20, 10))
+
+sns.scatterplot(x=most_recent_bh_df_sin_cero_cat_dummies_with_cons_df['predictions'], y=most_recent_bh_df_sin_cero_cat_dummies_with_cons_df['ln_review_count'], x_jitter=.30, ax=axes)
+
+axes.axline([0, 0], [1, 1])
+axes.set_xlabel("Predicted (ln review count)")
+axes.set_ylabel("ln(review count)")
+#[]
+#
+hypothesis = "(Unknown = 0), (Very Low = 0), (Very High = 0), (High = 0)"
+f_test = multivariate_inter_model_results.f_test(hypothesis)
+print(f_test)
